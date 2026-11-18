@@ -301,6 +301,75 @@ window.pmoExport={generateWeeklyPpt:GA,openWeeklyReport:sA,fitReportImage:YA,gro
 'use strict';
 
 /* ---------- Koneksi data tim ---------- */
+
+;
+/* Local-first storage. No automatic cloud writes. */
+window.pmoLocalStore = (() => {
+  let opening;
+  const empty = () => ({tasks: [], screenshots: [null, null], pivot: null, filename: '', dirty: false});
+  function database() {
+    if (!opening) opening = new Promise((resolve, reject) => {
+      const request = indexedDB.open('pmo-portable-local-v1', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('data');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(new Error('Penyimpanan laptop tidak tersedia. Izinkan penyimpanan browser dan jangan gunakan mode privat.'));
+    });
+    return opening;
+  }
+  async function read(key = 'current') {
+    const db = await database();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('data').objectStore('data').get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  async function write(value, key = 'current') {
+    const db = await database();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('data', 'readwrite');
+      transaction.objectStore('data').put(value, key);
+      transaction.oncomplete = () => resolve(value);
+      transaction.onabort = transaction.onerror = () => reject(new Error('Data belum tersimpan di laptop. Periksa ruang penyimpanan browser.'));
+    });
+  }
+  let queue = Promise.resolve();
+  function update(fields) {
+    const work = queue.then(async () => {
+      const current = await read() || empty();
+      const updatedAt = new Date().toISOString();
+      const next = {...current, ...fields, updatedAt, dirty: true};
+      const db = await database();
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction('data', 'readwrite');
+        const store = transaction.objectStore('data');
+        if (Object.hasOwn(fields, 'tasks') && current.tasks.length) store.put(current, 'archive:' + crypto.randomUUID());
+        store.put(next, 'current');
+        transaction.oncomplete = resolve;
+        transaction.onabort = transaction.onerror = () => reject(new Error('Data belum tersimpan di laptop. Periksa ruang penyimpanan browser.'));
+      });
+      return next;
+    });
+    queue = work.catch(() => {});
+    return work;
+  }
+  async function archives() {
+    const db = await database();
+    return new Promise((resolve, reject) => {
+      const result = [];
+      const request = db.transaction('data').objectStore('data').openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) { resolve(result.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))); return; }
+        if (String(cursor.key).startsWith('archive:')) result.push({...cursor.value, id: cursor.key});
+        cursor.continue();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+  return {read, write, update, archives};
+})();
+;
 const SUPABASE_URL = 'https://sgtfnnremtnvajmvhslc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_RlWZH_6je11fXSJEutbhnw_PTXh8LyH';
 function publicDatasetFetch(key, request = fetch, timeout = 30000) {
@@ -581,16 +650,22 @@ async function upsertDataset(fields) {
   if (error) throw error;
 }
 async function listArchives() {
-  const {data,error}=await sb.from('pmo_weekly_archives').select('id,filename,uploaded_at').order('uploaded_at',{ascending:false});
-  if(error) throw error;
-  const selected=state.archiveId;
-  $('archive-select').innerHTML='<option value="">Data terbaru</option>'+data.map(a=>`<option value="${escHtml(a.id)}">${escHtml(new Date(a.uploaded_at).toLocaleDateString('id-ID'))} · ${escHtml(a.filename)}</option>`).join('');
-  $('archive-select').value=selected;
+  const local = await window.pmoLocalStore.archives();
+  let cloud = [];
+  if(navigator.onLine) {
+    const {data,error} = await sb.from('pmo_weekly_archives').select('id,filename,uploaded_at').order('uploaded_at',{ascending:false});
+    if (!error) cloud = data || [];
+  }
+  const selected = state.archiveId;
+  const rows = [...local.map(a => ({...a, uploaded_at:a.updatedAt, prefix:'Laptop · '})), ...cloud.map(a => ({...a, prefix:'Tim · '}))];
+  $('archive-select').innerHTML = '<option value="">Data terbaru</option>' + rows.map(a=>`<option value="${escHtml(a.id)}">${escHtml(a.prefix + new Date(a.uploaded_at).toLocaleDateString('id-ID') + ' · ' + a.filename)}</option>`).join('');
+  $('archive-select').value = selected;
 }
 async function selectArchive(id) {
   if(!id){state.archiveId='';await load();return;}
   try {
-    const {data,error}=await sb.from('pmo_weekly_archives').select('id,filename,tasks,pivot,screenshots,uploaded_at,updated_at').eq('id',id).single();
+    const {data,error}=id.startsWith('archive:') ? {data:await window.pmoLocalStore.read(id),error:null} : await sb.from('pmo_weekly_archives').select('id,filename,tasks,pivot,screenshots,uploaded_at,updated_at').eq('id',id).single();
+    if (!data) throw new Error('Arsip tidak ditemukan.');
     if(error) throw error;
     const screenshots=await Promise.all(normalizeScreenshots(data.screenshots).map(image=>image?window.pmoExport.fitReportImage(image):null));
     state.archiveId=id;state.tasks=data.tasks||[];state.filename=data.filename;state.pivot=data.pivot||null;state.screenshots=screenshots;state.owner='';
@@ -598,10 +673,50 @@ async function selectArchive(id) {
     showError('');renderAll();
   } catch { $('archive-select').value=state.archiveId;showError('Arsip tidak dapat dimuat. Periksa koneksi internet.'); }
 }
-const saveUploadedTasks = (filename, tasks) => upsertDataset({ filename, tasks });
-const clearUploadedTasks = () => upsertDataset({ filename: 'Data kosong', tasks: [] });
-const savePivot = pivot => upsertDataset({ pivot });
-const saveScreenshots = screenshots => upsertDataset({ screenshots });
+let localDirty = false;
+let localRevision = 0;
+let localBusy = false;
+let syncing = false;
+async function saveLocal(fields) {
+  localBusy = true;
+  localRevision++;
+  try {
+    const saved = await window.pmoLocalStore.update(fields);
+    localDirty = true;
+    state.owner = new Date(saved.updatedAt).toLocaleString('id-ID', {timeZone:'Asia/Jakarta'});
+    renderStorage();
+    return saved;
+  } finally { localBusy = false; }
+}
+const saveUploadedTasks = (filename, tasks) => saveLocal({filename, tasks});
+const clearUploadedTasks = () => saveLocal({filename:'Data kosong', tasks:[]});
+const savePivot = pivot => saveLocal({pivot});
+const saveScreenshots = screenshots => saveLocal({screenshots});
+function renderStorage() {
+  $('storage-status').textContent = localDirty ? 'Tersimpan di laptop · Belum dikirim ke tim' : 'Salinan laptop · Data tim';
+  $('btn-sync').disabled = !localDirty || syncing || localBusy || Boolean(state.archiveId) || !navigator.onLine;
+  $('btn-sync').textContent = syncing ? 'Mengirim…' : 'Kirim ke Data Tim';
+  $('manage-archives').disabled = !navigator.onLine;
+}
+async function syncLocal() {
+  if (syncing || localBusy || importBusy || state.archiveId) return;
+  if (!navigator.onLine) { showError('Kirim ke Data Tim membutuhkan internet. Data laptop tetap tersimpan.'); return; }
+  if (!confirm('Kirim data laptop ini ke tim? Task, screenshot dan pivot tim terbaru akan diganti; data tim sebelumnya tetap diarsipkan.')) return;
+  syncing = true; renderStorage();
+  const revision = localRevision;
+  try {
+    const local = await window.pmoLocalStore.read();
+    if (!local) throw new Error('Belum ada data laptop.');
+    await upsertDataset({filename:local.filename, tasks:local.tasks, screenshots:local.screenshots, pivot:local.pivot});
+    if (revision === localRevision) {
+      await window.pmoLocalStore.write({...local, dirty:false});
+      localDirty = false;
+    }
+    showError(''); notify('Data berhasil dikirim ke tim');
+    await listArchives().catch(() => {});
+  } catch (e) { showError((e?.message || 'Data gagal dikirim.') + ' Salinan laptop tetap tersimpan.'); }
+  finally { syncing = false; renderStorage(); }
+}
 
 /* ---------- Laporan PDF ---------- */
 const esc = v => String(v == null ? '-' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c));
@@ -789,12 +904,12 @@ function renderScreenshots() {
   });
 }
 async function changeScreenshot(index, file) {
-  if(state.archiveId)return;
+  if(state.archiveId || localBusy || syncing)return;
   try {
     const value = file ? await window.pmoExport.fitReportImage(await readScreenshot(file)) : null;
     const next = [index === 0 ? value : state.screenshots[0], index === 1 ? value : state.screenshots[1]];
     await saveScreenshots(next);
-    state.screenshots = next; pptReady=null; showError(''); renderScreenshots(); if(file) notify(`Screenshot ${index+1} berhasil diunggah`);
+    state.screenshots = next; pptReady=null; showError(''); renderScreenshots(); if(file) notify(`Screenshot ${index+1} tersimpan di laptop`); renderStorage();
   } catch (e) { showError(e instanceof Error ? e.message : 'Screenshot gagal disimpan.'); }
 }
 
@@ -809,14 +924,14 @@ function renderPivot() {
     </article>`).join('')).join('');
 }
 async function handlePivot(file) {
-  if(state.archiveId)return;
+  if(state.archiveId || localBusy || syncing)return;
   if (!file) return;
   const btn = $('btn-pivot');
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   try {
     const data = await readPivot(file);
     await savePivot(data);
-    state.pivot = data; showError(''); renderPivot(); notify('Excel pivot Odoo berhasil diunggah');
+    state.pivot = data; showError(''); renderPivot(); renderStorage(); notify('Excel pivot Odoo tersimpan di laptop');
   } catch (e) { showError(e instanceof Error ? e.message : 'Pivot gagal dibaca.'); }
   finally { btn.disabled = false; btn.textContent = 'Unggah Pivot Odoo'; }
 }
@@ -861,6 +976,7 @@ function renderAll() {
   renderScreenshots();
   renderPivot();
   renderTable(ordered);
+  renderStorage();
   const archived=Boolean(state.archiveId);
   $('archive-status').textContent=archived?'Arsip · hanya baca':'Data terbaru';
   $('btn-clear').disabled=archived;$('btn-pivot').disabled=archived;
@@ -871,22 +987,31 @@ function renderAll() {
 }
 
 /* ---------- Muat data tim ---------- */
+function applySaved(saved) {
+  state.tasks = saved.tasks || [];
+  state.pivot = saved.pivot || null;
+  state.screenshots = normalizeScreenshots(saved.screenshots);
+  state.filename = saved.filename || 'Data tersimpan';
+  state.owner = saved.updatedAt ? new Date(saved.updatedAt).toLocaleString('id-ID', {timeZone:'Asia/Jakarta'}) : '';
+}
 async function load() {
-  if (importBusy) return;
-  await listArchives().catch(()=>showError('Daftar arsip tidak dapat dimuat.'));
-  if(state.archiveId)return;
+  if (importBusy || localBusy || syncing || state.archiveId) return;
+  const revision = localRevision;
   try {
+    const local = await window.pmoLocalStore.read();
+    if (local && revision === localRevision) { localDirty = Boolean(local.dirty); applySaved(local); }
+    renderAll();
+    if (!navigator.onLine || localDirty) { void listArchives(); return; }
     const saved = await loadDataset();
-    if (saved && Array.isArray(saved.tasks)) {
-      state.tasks = saved.tasks;
-      state.pivot = saved.pivot || null;
-      state.screenshots = await Promise.all((saved.screenshots || [null, null]).map(image => image ? window.pmoExport.fitReportImage(image) : null));
-      state.filename = saved.filename || 'Data tersimpan';
-      state.owner = saved.updatedAt ? new Date(saved.updatedAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) : '';
+    if (saved && revision === localRevision && !localDirty && !importBusy && !localBusy && !state.archiveId) {
+      await window.pmoLocalStore.write({...saved, dirty:false});
+      if (revision !== localRevision || localDirty || importBusy || localBusy) return;
+      applySaved(saved); renderAll();
     }
-    showError('');
-  } catch { showError('Data tim tidak dapat dimuat. Periksa koneksi internet.'); }
-  renderAll();
+    void listArchives();
+  } catch (e) {
+    if (!localDirty) showError('Data tim belum dapat dimuat. Import tetap bisa disimpan di laptop.');
+  }
 }
 
 /* ---------- Aksi unggah & hapus ---------- */
@@ -897,7 +1022,7 @@ function importStatus(message, busy = false) {
   $('upload-area').setAttribute('aria-busy', String(busy));
 }
 async function handleFile(file) {
-  if (state.archiveId || importBusy || !file) return;
+  if (state.archiveId || importBusy || localBusy || syncing || !file) return;
   if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { showError('Gunakan file .xlsx, .xls, atau .csv.'); return; }
   importBusy = true;
   showError('');
@@ -907,15 +1032,15 @@ async function handleFile(file) {
     if (!window.XLSX) throw new Error('Pembaca Excel belum tersedia. Pastikan app.js berada di folder yang sama dengan index.html.');
     const data = await readTasks(file);
     const label = `${file.name} (${data.length} baris)`;
-    importStatus(`${data.length} task terbaca. Menyimpan ke data tim…`, true);
+    importStatus(`${data.length} task terbaca. Menyimpan di laptop…`, true);
     await saveUploadedTasks(label, data);
     state.tasks = data; state.filename = label; state.sort = null;
     state.filters = { Project: [], Status: [], Type: [], PIC: [] };
     state.search = ''; $('task-search').value = ''; state.page = 1;
     showError(''); renderAll();
-    importStatus(`${data.length} task berhasil diimport dan disimpan.`);
-    notify('Excel mingguan berhasil diunggah');
-    await listArchives().catch(() => {});
+    importStatus(`${data.length} task berhasil diimport dan tersimpan di laptop.`);
+    notify('Excel mingguan tersimpan di laptop');
+    void listArchives().catch(() => {});
   } catch (e) {
     const message = e instanceof Error ? e.message : e?.message || 'File tidak bisa dibaca.';
     importStatus('Import belum berhasil.');
@@ -928,7 +1053,7 @@ async function handleFile(file) {
 }
 async function clearData() {
   if(state.archiveId)return;
-  if (!window.confirm('Hapus semua data Excel tim? Semua anggota akan melihat data kosong.')) return;
+  if (!window.confirm('Kosongkan task di laptop ini? Data tim tidak berubah sampai Anda memilih Kirim ke Data Tim.')) return;
   try {
     await clearUploadedTasks();
     state.tasks = []; state.filename = 'Data kosong'; state.page = 1;
@@ -956,6 +1081,9 @@ function bindEvents() {
   fileInput.addEventListener('change', () => { handleFile(fileInput.files[0]); fileInput.value = ''; });
 
   $('btn-clear').addEventListener('click', clearData);
+  $('btn-sync').addEventListener('click', syncLocal);
+  window.addEventListener('online', renderStorage);
+  window.addEventListener('offline', renderStorage);
   $('btn-reset').addEventListener('click', () => {
     state.filters = { Project: [], Status: [], Type: [], PIC: [] };
     state.search = ''; $('task-search').value = ''; state.page = 1; renderAll();
@@ -1041,4 +1169,4 @@ $('archive-delete').onclick=async()=>{
 /* ---------- Mulai ---------- */
 bindEvents();
 load();
-sb.channel('pmo-dataset').on('postgres_changes', { event: '*', schema: 'public', table: 'pmo_datasets' }, () => { load(); }).subscribe();
+// Local imports never auto-overwrite the team's current dataset.
