@@ -28381,7 +28381,8 @@ window.pmoGithubStore = (() => {
   }
   async function login(email, password) { session = await request('POST', { action: 'login', email, password }); }
   async function logout() { session = null; }
-  return { read, archives, save, deleteArchives, login, logout, isAdmin: () => Boolean(session), latestId: () => latestId };
+  async function recoverPassword() { return request('POST', { action: 'recover' }); }
+  return { read, archives, save, deleteArchives, login, logout, recoverPassword, isAdmin: () => Boolean(session), latestId: () => latestId };
 })();
 ;
 /* ---------- Data proyek & wiki (untuk laporan PDF) ---------- */
@@ -29106,6 +29107,13 @@ $('btn-admin').onclick=async()=>{
  $('admin-dialog').showModal();
 };
 $('admin-close').onclick=()=>$('admin-dialog').close();
+$('admin-forgot').onclick=async()=>{
+ const button=$('admin-forgot');button.disabled=true;$('admin-submit').disabled=true;
+ $('admin-error').textContent='Mengirim tautan reset ke yussacks@gmail.com…';
+ try{const result=await window.pmoGithubStore.recoverPassword();$('admin-error').textContent=result.message;}
+ catch(error){$('admin-error').textContent=error.message || 'Tautan belum dapat dikirim. Coba lagi nanti.';}
+ finally{button.disabled=false;$('admin-submit').disabled=false;}
+};
 $('admin-form').onsubmit=async e=>{
  e.preventDefault();$('admin-submit').disabled=true;$('admin-error').textContent='';
  try{await window.pmoGithubStore.login($('admin-email').value,$('admin-password').value);$('admin-password').value='';$('admin-dialog').close();renderAll();notify('Berhasil masuk sebagai admin');}
