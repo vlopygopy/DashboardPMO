@@ -257,3 +257,4 @@ table.task-table tbody tr:hover td:not(.project-cell){background:var(--muted)}
 .brand-logo{display:block;width:44px;height:44px;flex:none;object-fit:contain}
 
 table.task-table td.business-owner-cell{min-width:144px;max-width:240px;overflow-wrap:anywhere}
+#file-list{margin-top:14px}#admin-form label{display:block;margin:16px 0 8px;font-size:12px}#admin-form input{padding:0 12px}

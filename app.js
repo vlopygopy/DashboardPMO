@@ -287,6 +287,22 @@ window.pmoExport={generateWeeklyPpt:GA,openWeeklyReport:sA,fitReportImage:YA,gro
 /* ---------- Koneksi data tim ---------- */
 
 ;
+"use strict";(()=>{var E={POBSI:"POBSI",CCSA:"GCP MNC Holding","Policy Learning Management System - PLMS":"GCP","Document Management System (DMS)":"GCP MNC Holding","QR Advertising":"Marketing Directorate 3tv","MNC Contents eCommerce":"MNC Contents","Messaging Engine (MNC Notification Sender)":"MNC Holding","Dashboard RnD":"RnD","Website Kids TV":"MNC Channel","Carpool Units":"RCTI","MNC Peduli":"MNC Peduli","User Authentication Engine (MNC Users)":"MNC Holding","MNC ASIA HOLDING":"Ria Budhiani","Talent Casting":"MNC Pictures","e-Form":"IT MNC Holding","Website Sewa Lokasi":"MNC Contents","MNC Media (mnc.co.id)":"MNC Holding","mediacom.co.id":"MNC Holding","R+":"Rio Anugrah","DMS Plus":"Rio Anugrah","Inventory Management System - IMS":"Enriko"};var et=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];function G(t){if(!t||t==="-")return null;let e=t.match(/^(\d{1,2})[ /-]([A-Za-z]+|\d{1,2})[ /-](\d{4})$/);if(e){let r=e[2]??"",u=/^\d+$/.test(r)?Number(r)-1:et.findIndex(p=>p.toLowerCase()===r.slice(0,3).toLowerCase());if(u>=0&&u<12){let p=new Date(Number(e[3]),u,Number(e[1]));return Number.isNaN(p.getTime())?null:p}}let a=new Date(t);return Number.isNaN(a.getTime())?null:a}function B(t,e){let a=t.filter(r=>r.Project===e).map(r=>r["Business Owner"]?.trim()).filter(r=>!!(r&&r!=="-"));return[...new Set(a)].join(", ")||ot(e)}var F=E;function ot(t){let e=t.trim().toLowerCase(),a=Object.keys(F).find(r=>r.toLowerCase()===e);return a?F[a]??"-":"-"}var T=t=>t.filter(e=>e.Status!=="DONE"),z=t=>[...new Set(t.map(e=>e.Project))],N=t=>[...new Set(t)],U=t=>{let e=["img","mnc3tv","mncholding","none"].indexOf(t.toLowerCase().replace(/[\s_-]/g,""));return e<0?4:e},R=(t,e)=>Array.from({length:Math.ceil(t.length/e)},(a,r)=>t.slice(r*e,(r+1)*e)),H=t=>{let e=G(t);return e?`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,"0")}-${String(e.getDate()).padStart(2,"0")}`:"Tanpa tanggal"};function _(t,e=!1,a){let r=T(t),u=N(r.map(o=>H(o.From))),p=e&&u.length>14,l=o=>{let n=H(o);if(!p||n==="Tanpa tanggal")return n;let s=new Date(n);return s.setDate(s.getDate()-(s.getDay()+6)%7),`Minggu ${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,"0")}-${String(s.getDate()).padStart(2,"0")}`},i=e?1e9:0,C=N(r.map(o=>o.Project)),b=N(r.map(o=>o.Status)),g=N(r.map(o=>l(o.From))).sort((o,n)=>o==="Tanpa tanggal"?1:n==="Tanpa tanggal"?-1:o.localeCompare(n)),M=(o,n)=>g.map(s=>({label:s,values:o.map(h=>r.filter(c=>l(c.From)===s&&c[n]===h).length)})),v=R(C,i||8).flatMap(o=>R(M(o,"Project"),i||12).map(n=>({title:"Task by Start Date & Project",subtitle:"Tanggal mulai (From) \xB7 task belum DONE",kind:"stack",series:o,rows:n,total:n.reduce((s,h)=>s+h.values.reduce((c,S)=>c+S,0),0)}))),k=R(M(b,"Status"),i||12).map(o=>({title:"Task by Start Date & Status",subtitle:"Tanggal mulai (From) \xB7 status task saat ini, bukan riwayat perubahan",kind:"line",series:b,rows:o,total:o.reduce((n,s)=>n+s.values.reduce((h,c)=>h+c,0),0)})),w=R(C,i||10).map(o=>({title:"Task Summary by Project",subtitle:"Jumlah task belum DONE per proyek",kind:"column",series:["Count"],rows:o.map(n=>({label:n,values:[r.filter(s=>s.Project===n).length]})),total:r.filter(n=>o.includes(n.Project)).length})),m=(o,n)=>({title:o,subtitle:"Tidak ada task belum DONE",kind:n,series:[],rows:[],total:0}),d={title:"Technical Support Developer Odoo ERP Summary",subtitle:a?"Tasks Analysis \xB7 Count per proyek \xB7 Excel pivot Odoo":"Belum ada Excel pivot Odoo",kind:"column",series:["Count"],rows:a?[...a.rows].sort((o,n)=>U(o.project)-U(n.project)||o.project.localeCompare(n.project)).map(o=>({label:o.project,values:[o.count]})):[],total:a?.total??0};return[v.length?v:[m("Task by Start Date & Project","stack")],k.length?k:[m("Task by Start Date & Status","line")],a!==void 0?[d]:w.length?w:[m("Task Summary by Project","column")]]}var D=t=>t.replace(/[&<>"']/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[e]??e),$=t=>`var(--report-series-${t%8})`,J=(t,e=21)=>{let a=t.split(/\s+/),r=[],u="";for(let p of a)(u+" "+p).trim().length>e&&u&&(r.push(u),u=""),u=(u+" "+p).trim();return u&&r.push(u),r};function V(t,e=!1){let a=Math.ceil(t.series.length/4),r=1120,u=e?240:t.kind==="column"?560:t.kind==="bar"?Math.max(480,90+t.rows.length*34):480+Math.max(0,a-1)*22,p=t.kind==="bar"?300:62,l=45,i=e?25:42,C=e?35:t.kind==="bar"?50:t.kind==="column"?60:126+Math.max(0,a-1)*22,b=r-p-l,g=u-i-C,M=Math.max(1,...t.rows.map(d=>t.kind==="stack"||t.kind==="column"?d.values.reduce((o,n)=>o+n,0):Math.max(0,...d.values))),v=t.kind==="column"&&M<=10?1:Math.max(1,Math.ceil(M/5)),k=Math.ceil(M/v)*v,w="font-family:Arial,sans-serif;font-size:14px;fill:var(--report-ink)",m=`<rect width="${r}" height="${u}" style="fill:var(--report-paper)"/>`;if(!t.rows.length)return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${r} ${u}" role="img" aria-label="${D(t.title)}"><rect width="100%" height="100%" style="fill:var(--report-paper)"/><text x="560" y="${u/2}" text-anchor="middle" style="${w}">${D(t.subtitle==="Belum ada Excel pivot Odoo"?t.subtitle:"Tidak ada task belum DONE")}</text></svg>`;for(let d=0;d<=k;d+=v){let o=t.kind!=="bar",n=p+d/k*b,s=i+g-d/k*g;m+=o?`<line x1="${p}" x2="${r-l}" y1="${s}" y2="${s}" style="stroke:var(--report-grid)" stroke-dasharray="3 3"/><text x="${p-12}" y="${s+5}" text-anchor="end" style="${w}">${d}</text>`:`<line x1="${n}" x2="${n}" y1="${i}" y2="${i+g}" style="stroke:var(--report-grid)" stroke-dasharray="3 3"/><text x="${n}" y="${i+g+23}" text-anchor="middle" style="${w}">${d}</text>`}if(t.kind==="bar"){let d=g/t.rows.length;t.rows.forEach((o,n)=>{let s=o.values[0]??0,h=i+n*d+d*.18,c=J(o.label,30);m+=`<text x="${p-15}" y="${h+d*.32-(c.length-1)*8}" text-anchor="end" style="${w}">${c.map((S,f)=>`<tspan x="${p-15}" dy="${f?16:0}">${D(S)}</tspan>`).join("")}</text><rect x="${p}" y="${h}" width="${s/k*b}" height="${d*.62}" rx="2" style="fill:${$(0)}"/><text x="${p+s/k*b+8}" y="${h+d*.4}" style="${w}">${s}</text>`})}else{let d=b/t.rows.length,o=t.kind==="column"?d*.72:Math.min(50,d*.55);t.rows.forEach((n,s)=>{let h=p+d*(s+.5),c=0;(t.kind==="stack"||t.kind==="column")&&n.values.forEach((S,f)=>{if(!S)return;let P=S/k*g,O=i+g-c-P;c+=P,m+=`<rect x="${h-o/2}" y="${O}" width="${o}" height="${P}" rx="2" style="fill:${t.kind==="column"?"var(--report-odoo-bar)":$(f)}"/>${t.kind==="column"?"":`<text x="${h}" y="${O+P/2+5}" text-anchor="middle" style="${w};fill:var(--report-on-series)">${S}</text>`}`}),m+=t.kind==="column"?`<text x="${h}" y="${i+g+24}" text-anchor="middle" style="${w};font-size:12px">${J(n.label,Math.max(8,Math.floor(d/8))).map((S,f)=>`<tspan x="${h}" dy="${f?14:0}">${D(S)}</tspan>`).join("")}</text>`:`<text transform="translate(${h-5},${i+g+22}) rotate(-25)" text-anchor="end" style="${w};font-size:12px">${D(n.label)}</text>`}),t.kind==="line"&&t.series.forEach((n,s)=>{let h=t.rows.map((c,S)=>[p+d*(S+.5),i+g-(c.values[s]??0)/k*g]);m+=`<polyline points="${h.map(c=>c.join(",")).join(" ")}" fill="none" stroke-width="2" style="stroke:${$(s)}"/>`,h.forEach((c,S)=>{m+=`<circle cx="${c[0]}" cy="${c[1]}" r="4" style="fill:${$(s)}"/><text x="${c[0]}" y="${(c[1]??0)-10-s*12}" text-anchor="middle" style="${w};fill:${$(s)}">${t.rows[S]?.values[s]??0}</text>`})}),t.series.forEach((n,s)=>{let h=t.kind==="column"?r-l-70:65+s%4*270,c=t.kind==="column"?i-12:u-21-(a-1-Math.floor(s/4))*22;m+=`<rect x="${h}" y="${c-11}" width="11" height="11" style="fill:${t.kind==="column"?"var(--report-odoo-bar)":$(s)}"/><text x="${h+18}" y="${c}" style="${w};font-size:11px">${D(n.length>38?n.slice(0,36)+"\u2026":n)}</text>`})}return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${r} ${u}" role="img" aria-label="${D(t.title)}">${m}</svg>`}var X={"Acquisition System":{section:"1.New Project",pm:"Julianto Ardiyansah",sa:"Jihad",dev:"Wahyu, Angga",user:"Dhika Shakiya",staging:"https://",prod:"https://",targetLive:"-",priority:"Medium",stage:"Requirement"},"MNC ASIA HOLDING":{section:"1.New Project",pm:"Julianto Ardiyansah",sa:"Jihad",dev:"Riyadh",user:"-",staging:"https://",prod:"https://",targetLive:"May-26",priority:"Medium",stage:"Go Live"},"Sewa Lokasi":{section:"1.New Project",pm:"-",sa:"Jihad",dev:"Riyadh",user:"Eka, Riko",staging:"https://rcsewastudio.mncgroup.com/",prod:"https://sewalokasi.com",targetLive:"April-26",priority:"Medium",stage:"Go Live"},"MNC Kids":{section:"1.New Project",pm:"Julianto",sa:"Jihad",dev:"Ardha, Riyadh",user:"Bagus",staging:"-",prod:"-",targetLive:"22 Juni atau 23 Juli 26",priority:"Medium",stage:"Requirement"},"Dashboard RnD":{section:"1.New Project",pm:"-",sa:"Jihad",dev:"Ridwan Normansyah",user:"-",staging:"https://spro.mnc.my.id/login",prod:"-",targetLive:"-",priority:"Medium",stage:"Live"},"Talent Casting Revamp":{section:"1.New Project",pm:"Julianto",sa:"Jihad",dev:"Ardha, Angga",user:"Pak Bakhti, Garry",staging:"https://devcasting.mncgroup.com/",prod:"-",targetLive:"Apr-26",priority:"Medium",stage:"Pre Go Live"},"OMS MNC Content":{section:"1.New Project",pm:"Julianto",sa:"Julianto",dev:"Wahyu, Angga",user:"Sukma, Koh Redo",staging:"https://omsdev_content.mncgroup.com/",prod:"-",targetLive:"Apr-26",priority:"High",stage:"Live"},"MNC PEDULI":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Cecep",user:"Mba Aldini, Raka",staging:`https://devmncpeduli.mncgroup.com/
+https://devwebcms.mncgroup.com/`,prod:`https://mncpeduli.org/
+https://webcms.mncgroup.com`,targetLive:"-",priority:"High",stage:"Live"},"MNC Channels":{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"Ardha, Riyadh",user:"Firza, Bagus Nova Gyatna",staging:`Web:rcmncchannels-v2.mncgroup.com
+CMS:https://www.rcmncchannels.mncgroup.com`,prod:"https://www.mncchannels.com",targetLive:"-",priority:"Low",stage:"Live"},"E-FORM":{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"Angga",user:"Bu Emilia",staging:"https://deveform.mncgroup.com/",prod:"https://eform.mncgroup.com/",targetLive:"-",priority:"Medium",stage:"Live"},"MNC Users":{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"-",user:"-",staging:"devusers2.mncgroup.com",prod:"https://msender.mncgroup.com",targetLive:"-",priority:"Medium",stage:"Live"},"Carpool Units":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Cecep",user:"Pak Yudi FTA",staging:"https://rccarpoolunit.mncgroup.com/",prod:"http://carpool.mncgroup.com/",targetLive:"-",priority:"Medium",stage:"Live"},CCSA:{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Riyadh",user:"Yordina, Rio Cahyo Sigit",staging:"-",prod:"https://ccsa.mncgroup.com",targetLive:"-",priority:"Medium",stage:"Go Live Preparation"},"DMS \u2013 Document Management System":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Cecep",user:"Yordina, Rio Cahyo Sigit",staging:"https://rcdms.mncgroup.com/",prod:"https://dms.mncgroup.com/",targetLive:"-",priority:"MEDIUM",stage:"Go Live preparation"},"MNC Animation":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Riyadh",user:"Suhendra",staging:"https://rcmncanimation-v2.mncgroup.com/",prod:"https://www.mncanimation.com",targetLive:"-",priority:"MEDIUM",stage:"Live"},"Messaging Engine (MNC Notification Sender)":{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"Cecep",user:"-",staging:"-",prod:"https://msender.mncgroup.com",targetLive:"-",priority:"Medium",stage:"Go Live preparation"},"PLMS (Policy Learning Management System)":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Cecep",user:"Yordin, Rio Cahyo",staging:"https://rcplms-v2.mncgroup.com/logi",prod:"http://plms.mncgroup.com",targetLive:"-",priority:"Medium",stage:"Go Live preparation"},"IMS (Inventory Management System)":{section:"2.Continuous Development",pm:"-",sa:"Moch.Isa, Jihad, Julianto",dev:"Ridwan, Cecep, Hendra",user:"-",staging:"-",prod:"-",targetLive:"-",priority:"HIGH",stage:"Live"},GTV:{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"Riyadh",user:"M. Zainul",staging:"-",prod:"https://gtv.id/",targetLive:"-",priority:"Medium",stage:"Live"},"MNC Content E-commerce":{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"Ardha, Riyadh",user:"-",staging:"https://rcmnccontents-v4.mncgroup.com/access-gateway",prod:"https://mnccontents.com/",targetLive:"-",priority:"Medium",stage:"Live"},POBSI:{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Ardha, Riyadh",user:"Pak Andri",staging:"https://ardha.my.id/pobsi",prod:"https://www.pobsi.org",targetLive:"-",priority:"Medium",stage:"Live"},"Jual Asset":{section:"2.Continuous Development",pm:"-",sa:"Jihad",dev:"Ardha, Riyadh",user:"Ibu Henny",staging:"https://staging.jualaset.id/",prod:"-",targetLive:"-",priority:"Medium",stage:"Live"},Metabase:{section:"2.Continuous Development",pm:"-",sa:"Hendra",dev:"Hendra",user:"-",staging:"-",prod:"-",targetLive:"-",priority:"Medium",stage:"Live"},"QR Advertising":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Ridwan",user:"-",staging:"-",prod:"-",targetLive:"-",priority:"Medium",stage:"Live"},"Website Miss Indonesia":{section:"2.Continuous Development",pm:"-",sa:"Dedik",dev:"Ardha, Riyadh",user:"-",staging:"-",prod:"-",targetLive:"-",priority:"Medium",stage:"Live"},"Odoo Finance Radio":{section:`3.Odoo ERP
+3.1 New Project`,pm:"Chaerul Ismanto",sa:"Functional ERP",dev:"Badra, Rahmat, Rizka, Sarip",user:"User IMG",staging:"-",prod:"-",targetLive:"-",priority:"High",stage:"Preparation"},"Odoo Finance MDE":{section:`3.Odoo ERP
+3.1 New Project`,pm:"Chaerul Ismanto",sa:"Functional ERP",dev:"Badra, Rahmat, Rizka, Sarip",user:"User FTA , IMG & MDE",staging:"https://dev3tv.mncgroup.com",prod:"-",targetLive:"-",priority:"High",stage:"Preparation"},"Odoo Finance MNCH":{section:`3.Odoo ERP
+3.2 Continous Development`,pm:"Chaerul Ismanto",sa:"Functional ERP",dev:"Badra, Rahmat, Rizka, Sarip",user:"User MNCH",staging:"-",prod:"-",targetLive:"-",priority:"High",stage:"Live"},"Odoo Finance FTA":{section:`3.Odoo ERP
+3.2 Continous Development`,pm:"Chaerul Ismanto",sa:"Functional ERP",dev:"Badra, Rahmat, Rizka, Sarip",user:"User FTA",staging:"-",prod:"-",targetLive:"-",priority:"High",stage:"Live"},"Odoo Finance MNCP":{section:`3.Odoo ERP
+3.2 Continous Development`,pm:"Chaerul Ismanto",sa:"Functional ERP",dev:"Badra, Rahmat, Rizka, Sarip",user:"User MNCP",staging:"-",prod:"-",targetLive:"-",priority:"High",stage:"Live"},"Odoo Finance IMG":{section:`3.Odoo ERP
+3.2 Continous Development`,pm:"Chaerul Ismanto",sa:"Functional ERP",dev:"Badra, Rahmat, Rizka, Sarip",user:"User IMG",staging:"-",prod:"https://imgodooerp.mncgroup.com/",targetLive:"-",priority:"High",stage:"Live"}};var L=[{no:1,proj:"Website Jual Aset dan Resources (Website)",staging:"https://staging.jualaset.id/",prod:"-",info:"Web site that information asset MNC group to the visitor about Asset that can be sell"},{no:2,proj:"Website Billiard /POBSI (Website)",staging:"-",prod:"https://www.pobsi.org",info:"Web Company profile about pobsi organization (Persatuan Olahraga Billiard)"},{no:3,proj:"CCSA (Web Apps)",staging:"-",prod:"https://ccsa.mncgroup.com",info:"Web Application that support Unit MNC group to make unit Comply with SOP which is user can be input the System by methode Self Assement"},{no:4,proj:"MNC Channel (Website)",staging:"-",prod:"https://mncchannels.com/",info:"Web site company profile about MNC Channels"},{no:5,proj:"MNC Animations (Website)",staging:"-",prod:"https://www.mncanimation.com",info:"Web site company profile MNC Animation"},{no:6,proj:"Website GTV / Global TV (Website)",staging:"-",prod:"https://gtv.id",info:"Web site Company Profile GTV (Global TV)"},{no:7,proj:"Talent Casting (Web Apps)",staging:"-",prod:"https://talentcasting.mncgroup.com",info:"Web application that record registered talent for internal"},{no:8,proj:"IDMS (Identity management System) (Web Apps)",staging:"-",prod:"https://idms.mncgroup.com/",info:"Web Application that can handle automation employee resign and set inactive user email /domain triggered by HRD user"},{no:9,proj:"MNC Content eCommerce (Website)",staging:"https://rcmnccontents-v4.mncgroup.com/access-gateway",prod:"https://mnccontents.com/",info:"Web site company profile about information content Inventory MNC group"},{no:10,proj:"Federasi Futsal Indonesia (FFI) (Web site)",staging:"-",prod:"https://futsalindonesia.org/",info:"Web site company profile about Futsal Organization"},{no:11,proj:"User Authentication Engine (MNC User) (Web Apps)",staging:"-",prod:"https://users.mncgroup.com",info:"Internal web application use for register Authentication user from others application which purpose"},{no:12,proj:"Messaging Engine (MNC Notification Sender) (Web Apps)",staging:"-",prod:"https://msender.mncgroup.com",info:"Internal web application that can otomatic notification that can be integrated with other System"},{no:13,proj:"e-Form (Phase1) (Web Apps)",staging:"-",prod:"https://devhris.mncgroup.com/eform/",info:"Web app that can be use to mnc user to request AFR (Access Request Forms) & HRF (Hardware Request Forms)"},{no:14,proj:"Carpool Holding (Web Apps)",staging:"-",prod:"https://carpool.mncgroup.com",info:"Carpool Holding (Web Apps)"},{no:15,proj:"Carpool Unit (Web Apps)",staging:"-",prod:"-",info:"Application Support for Booking Car and Driver Unit MNC (3FTA, MNC Vision & Others unit)"},{no:16,proj:"DMS (Web Apps)",staging:"-",prod:"https://dms.mncgroup.com/",info:"Digital Document Application for all unit"},{no:17,proj:"Learning Management System (Website)",staging:"-",prod:"-",info:"Web Apps to manage data learning management"},{no:18,proj:"Legal System (Web Apps)",staging:"-",prod:"https://legalSystem.mncgroup.com/login",info:"Web Apps for Tracking Legal Document sign off MNC TBK"},{no:19,proj:"MNC Content (Website)",staging:"-",prod:"https://mnccontents.com/",info:"Company profiles website for MNC Content"},{no:20,proj:"MNC Group (WebSite)",staging:"-",prod:"https://www.mncgroup.com/",info:"Company profile's website"},{no:21,proj:"MNC Licensing (WebSite )",staging:"-",prod:"https://mnclicensing.co.id",info:"Company profile's website about Unit MNC Licencing"},{no:22,proj:"OMS MDI (Web Apps)",staging:"-",prod:"https://omsmdi.mncgroup.com",info:"Web Apps Support for transaction Media Order to Billing and integration with Oracle Finance (RCTI+)"},{no:23,proj:"OMS MPI (Web Apps)",staging:"-",prod:"https://omSystem.mncgroup.com/",info:"Web Apps Support for transaction Media Order to Billing and integration with Oracle Finance (MNC Portal Indonesia)"},{no:24,proj:"MNC MI (Website)",staging:"-",prod:"https://www.mnc.co.id/en",info:"Company Profiles Website MNC Media Investment Ltd, saat ini web tersebut di alihkan/diredirect"},{no:25,proj:"MNC Peduli (Web site)",staging:"-",prod:"https://www.mncpeduli.org/",info:"Company profile Website and Donation online with Payment Gateway (Infokom & MotionPay)"},{no:26,proj:"MNC User (Web Apps)",staging:"-",prod:"https://users.mncgroup.com",info:"Integration Web Apps for all user Register in exchange domain integration with Web Apps existing"},{no:27,proj:"MNC Studio's International (MSI) (Website)",staging:"-",prod:"https://www.mncdigital.com/",info:"Company Profiles Website MNC Studio's International"},{no:28,proj:"MNC University (web Site)",staging:"-",prod:"https://mncu.ac.id/",info:"SIAKAD Web Apps : Web Apps Information System Academic"},{no:29,proj:"MEDIACOM (Website)",staging:"-",prod:"https://www.mediacom.co.id",info:"Company Profiles Website PT Global Mediacom Tbk."},{no:30,proj:"MNC Tbk (Website)",staging:"-",prod:"https://www.mnc.co.id",info:"MNC Tbk (Website)"},{no:31,proj:"MNC Games / Esport Star Indonesia (Website)",staging:"-",prod:"https://www.esportsstarindonesia.id/en",info:"Company Profiles Website MNC Esport Star Indonesia"},{no:32,proj:"Odoo Finance (Web Apps)",staging:"-",prod:"https://odooerp3tvpregolive.mncgroup.com/web/login",info:"Finance System Web Apps Implemented : MNC Holding , 3FTV (RCTI, MNCTV, GTV), MNCP"},{no:33,proj:"Odoo HR (Web Apps)",staging:"-",prod:"https://mnchodoohr.mncgroup.com",info:"HR System Web Apps"},{no:34,proj:"SOS (Sales Order System) (Web Apps)",staging:"-",prod:"-",info:"Web Apps questioner about practical policy activity in unit business"},{no:35,proj:"Visqual (Web Apps)",staging:"-",prod:"https://visqual.mncgroup.com/",info:"Project Management Tools (Internal Development)"},{no:36,proj:"PLMS(Web Apps)",staging:"https://rcplms-v2.mncgroup.com/login",prod:"http://plms.mncgroup.com/",info:"Web Apps questioner about practical policy activity in unit business"},{no:37,proj:"RCTI (Web Apps)",staging:"-",prod:"https://www.rcti.tv",info:"Web site company profile Rcti (Rajawali Citra Televisi Indonesia)"},{no:38,proj:"Transmission Monitoring Center (TMC) (Web Apps)",staging:"-",prod:"https://tmc.mncgroup.com",info:"Web App Transmission monitoring Center for Inews Technic Team"},{no:39,proj:"MNC Group-VP (Website)",staging:"-",prod:"https://www.mncgroup-vp.com",info:"Website company Video Profile about MNC Group"},{no:40,proj:"MVN (MNC Vision Networks) (Web site)",staging:"-",prod:"https://www.mncvisionnetwork.com",info:"Website company Profile about MNC Vision Network"},{no:41,proj:"MNC Pictures (Web site)",staging:"-",prod:"https://www.mncpictures.com",info:"Website company Profile about MNC Pictures"},{no:42,proj:"Star Media Nusantara (SMN) (Web site)",staging:"-",prod:"https://www.starmedianusantara.com",info:"Website company Profile about Start Media Nusantara"},{no:43,proj:"OMS Contents",staging:"oms-staging.mncgroup.com / devcontents_v2.mncgroup.com",prod:"omscontents.mncgroup.com",info:"Website application for process selling program to client."},{no:45,proj:"MNC ASIA HOLDING",staging:"-",prod:"mncasiaholding.com",info:"Website company Profile about MNC Media & Entertainment focuses on four key business pillars: FTA TV, Pay TV and ICT, iNews Media Group, Digital and Content."},{no:46,proj:"RnD",staging:"-",prod:"-",info:"-"}];var W=["Support Functional Summary by Date","Support Functional Summary"];function q(t){return typeof t=="string"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(t)&&t.length<=7e6}function K(t){let e=Array.isArray(t)?t:[];return[q(e[0])?e[0]:null,q(e[1])?e[1]:null]}var A=()=>new Promise(t=>setTimeout(t,30));function j(t,e,a,r=0,u=a){let p=e,l=-1,i=a,C=-1;for(let b=r;b<u;b++)for(let g=0;g<e;g++){let M=(b*e+g)*4;(t[M+3]??0)>32&&Math.min(t[M]??255,t[M+1]??255,t[M+2]??255)<225&&(p=Math.min(p,g),l=Math.max(l,g),i=Math.min(i,b),C=Math.max(C,b))}return l<p?null:{left:p,top:i,width:l-p+1,height:C-i+1}}function at(t,e,a){let r=j(t,e,a);if(!r)return null;let u=Math.floor(r.top+r.height*.42),p=[],l=0;for(let m=r.top;m<u;m++){let d=0;for(let o=r.left;o<r.left+r.width;o++){let n=(m*e+o)*4;(t[n+3]??0)>32&&Math.min(t[n]??255,t[n+1]??255,t[n+2]??255)<225&&d++}d>=r.width*.7&&p.push(m)}let i=p.filter(m=>!p.includes(m-4)||!p.includes(m+4));if(i.length&&i[i.length-1]!==void 0){let m=i[i.length-1]??0;m>r.top+8&&(l=m+1)}if(!l){let m=null;for(let d=r.top;d<u;d++)if(!j(t,e,a,d,d+1))m??=d;else{if(m!==null&&d-m>=12&&m-r.top>=8){l=d;break}m=null}}let C=new Uint8ClampedArray(t);for(let m of i)C.fill(255,m*e*4,(m+1)*e*4);let b=l?j(C,e,a,r.top,l):null,g=l?j(t,e,a,l,a):r;if(!g)return null;let M=10,v=b?20:0,k=g.height+(b?.height??0)+v,w=Math.max(g.width,b?.width??0,k)+M*2;return{header:b,plot:g,side:w,gap:v,top:Math.floor((w-k)/2),clean:C}}async function Y(t){let e=new Image;e.src=t,await e.decode();let a=document.createElement("canvas");a.width=e.naturalWidth,a.height=e.naturalHeight;let r=a.getContext("2d");if(!r)throw new Error("Gambar tidak dapat dirapikan.");r.drawImage(e,0,0);let u=r.getImageData(0,0,a.width,a.height).data,p=at(u,a.width,a.height);if(!p)return t;let{header:l,plot:i,side:C,gap:b,top:g,clean:M}=p,v=document.createElement("canvas");v.width=C,v.height=C;let k=v.getContext("2d");if(!k)throw new Error("Gambar tidak dapat dirapikan.");k.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--report-paper").trim(),k.fillRect(0,0,v.width,v.height);let w=g;return l&&(r.putImageData(new ImageData(M,a.width,a.height),0,0),k.drawImage(a,l.left,l.top,l.width,l.height,Math.floor((C-l.width)/2),w,l.width,l.height),w+=l.height+b,r.drawImage(e,0,0)),k.drawImage(a,i.left,i.top,i.width,i.height,Math.floor((v.width-i.width)/2),w,i.width,i.height),v.toDataURL("image/png")}function Z(t,e,a=12){return t*a+e+1}var y=t=>String(t??"-").replace(/[&<>"']/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[e]||e),I=X,x=(t,e)=>`<tr><td>${y(t)}</td><td>${y(e||"-")}</td></tr>`;async function Q(t,e=new Date,a="Excel mingguan",r=null,u=[null,null],p){let l=K(u);if(!l[0]||!l[1])throw new Error("Unggah screenshot gambar 1 dan 2 terlebih dahulu.");if(!r)throw new Error("Unggah Excel pivot Odoo untuk diagram 3 terlebih dahulu.");let i=window.open("","_blank");if(!i)throw new Error("Browser memblokir tab laporan. Izinkan pop-up, lalu coba lagi.");try{p?.(10,"Menyiapkan data laporan\u2026"),await A();let C=await Promise.all(l.map(o=>o?Y(o):null));l[0]=C[0]??null,l[1]=C[1]??null;let b=e.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}),g=`<header><h1>Weekly Update ${y(b)}</h1><p>IT Corporate Application</p></header>`,M=z(t),v="",k=M.map(o=>{let n=T(t).filter(f=>f.Project===o),s=[...new Set(n.map(f=>f.PIC).filter(f=>f!=="-"))].join(", ")||"-",h=Object.keys(I).find(f=>f.toLowerCase()===o.toLowerCase())||Object.keys(I).find(f=>f.toLowerCase().includes(o.toLowerCase())||o.toLowerCase().includes(f.toLowerCase())),c=h?I[h]??{}:{},S=c.section&&c.section!==v?`<h2>${y(c.section).replace(/\n/g,"<br>")}</h2>`:"";return c.section&&(v=c.section),`<section class="page">${g}${S}<table class="meta"><tbody>${x("Project Name",o)}${x("PM",c.pm)}${x("SA",c.sa)}${x("Developer",c.dev)}${x("User (PIC)",c.user||s)}${x("URL Web \u2014 Staging",c.staging)}${x("URL Web \u2014 Production",c.prod)}${x("Business Owner",B(t,o))}${x("Target Live",c.targetLive)}${x("Project Priority",c.priority)}${x("Project Stage",c.stage)}</tbody></table><table class="task-table"><colgroup><col style="width:5%"><col style="width:30%"><col style="width:11%"><col style="width:10%"><col style="width:13%"><col style="width:11%"><col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th>No</th><th>Task Name</th><th>Task Status</th><th>Task Type</th><th>PIC</th><th>Due Date</th><th>Actual Date</th><th>Note</th></tr></thead><tbody>${n.map((f,P)=>`<tr><td>${P+1}</td><td>${y(f["Task Name"])}</td><td>${y(f.Status)}</td><td>${y(f.Type)}</td><td>${y(f.PIC)}</td><td>${y(f["Due Date"])}</td><td>${y(f["Actual Date"]||f.From)}</td><td></td></tr>`).join("")}</tbody></table></section>`}).join("");p?.(40,"Tabel proyek selesai. Menyiapkan gambar dan diagram\u2026"),await A();let w=l.map((o,n)=>`<section class="page chart-page">${g}<h2>${n+1}. ${y(W[n])}</h2><div class="image-wrap"><img src="${y(o)}" alt="${y(W[n])}"></div><p class="source">Source: https://helpdesk.mncgroup.com/ \xB7 Screenshot yang diunggah</p></section>`).join("")+_(t,!0,r).slice(2).map(o=>o.map(n=>`<section class="page chart-page">${g}<h2>3. ${y(n.title)}</h2><p>${y(n.subtitle)}</p><p>Total records: ${n.total} \xB7 Generated: ${y(b)}</p><div class="report-chart">${V(n)}</div><p class="source">Source: ${y(r.filename)} \xB7 Count dari pivot Tasks Analysis; status dan tanggal tidak tersedia di pivot</p></section>`).join("")).join(""),m=`<section class="page">${g}<h3>Release Period 1 Jan \u2013 31 July 2026:</h3><table><thead><tr><th>No</th><th>Website / Web Apps</th><th>Details</th></tr></thead><tbody><tr><td>1</td><td>OMS Contents</td><td>Order management system</td></tr><tr><td>2</td><td>MNC ASIA HOLDING</td><td>Company Profile</td></tr><tr><td>3</td><td>IMS</td><td>Inventory management system</td></tr><tr><td>4</td><td>RnD</td><td>Dashboard</td></tr></tbody></table><h3>Ready to Release Period 1 Jan \u2013 30 July 2026:</h3><table><thead><tr><th>No</th><th>Website / Web Apps</th><th>Details</th></tr></thead><tbody><tr><td>1</td><td>Talent Casting Revamp</td><td></td></tr></tbody></table></section>`,d=Array.from({length:Math.ceil(L.length/12)},(o,n)=>`<section class="page">${g}${n===0?"<h2>Wiki</h2>":""}<table><thead><tr><th>No</th><th>Project Name</th><th>URL STAGING</th><th>URL PROD</th><th>Project Info</th></tr></thead><tbody>${L.slice(n*12,(n+1)*12).map((s,h)=>`<tr><td>${Z(n,h)}</td><td>${y(s.proj)}</td><td>${y(s.staging)}</td><td>${y(s.prod)}</td><td>${y(s.info)}</td></tr>`).join("")}</tbody></table></section>`).join("");i.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Weekly Update ${y(b)}</title><style>:root{--report-paper:#fff;--report-ink:#172126;--report-muted:#57636c;--report-grid:#dbe1e5;--report-surround:#525659;--report-toolbar:#172126;--report-on-series:#fff;--report-series-0:#287bbc;--report-series-1:#cf554d;--report-series-2:#18856a;--report-series-3:#9a7526;--report-series-4:#7756a1;--report-series-5:#377a83;--report-series-6:#ba5679;--report-series-7:#59636d;--report-shadow:0 2px 14px #2226}
+    *{box-sizing:border-box}body{margin:0;background:var(--report-surround);color:var(--report-ink);font:13px Arial,sans-serif}.toolbar{position:sticky;top:0;background:var(--report-toolbar);color:var(--report-paper);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;z-index:5}.toolbar button{background:var(--report-series-0);color:var(--report-paper);border:0;border-radius:5px;padding:9px 18px;cursor:pointer;font-weight:700}.page{background:var(--report-paper);width:297mm;min-height:210mm;margin:18px auto;padding:15mm 18mm;box-shadow:var(--report-shadow);break-after:page;overflow-wrap:anywhere}header{margin-bottom:24px}h1{font-size:24px;margin:0 0 3px}header p{margin:0;color:var(--report-muted)}h2{font-size:19px;margin:18px 0 12px}h3{font-size:16px;margin:18px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid var(--report-ink);padding:6px;text-align:left;vertical-align:top}th{font-weight:700}.meta{width:60%;margin-bottom:20px}.meta td:first-child{width:150px}.image-wrap{text-align:center;height:450px;display:flex;align-items:center;justify-content:center}.image-wrap img{max-width:85%;max-height:100%;object-fit:contain}.source{text-align:center;font-size:12px}.source a{color:var(--report-series-0)}@media print{.toolbar{display:none}.page{width:100%;margin:0;box-shadow:none;break-after:page}@page{size:A4 landscape;margin:0}}@media(max-width:1100px){.page{transform-origin:top left;max-width:100%;min-height:initial;overflow:auto}}
+    :root{--report-odoo-bar:#4ba3ed}.report-chart svg{width:100%;height:auto;max-height:140mm}.project-report-chart{width:75%;margin:18px auto 0}.project-report-chart svg{width:100%;max-height:155px}.chart-page .report-chart{margin-top:12px}.chart-page header{margin-bottom:12px;text-align:center}.chart-page h2{margin:10px 0;text-align:center}.chart-page p{text-align:center;margin:6px 0}.image-wrap{width:450px;max-width:100%;height:auto;aspect-ratio:1;margin:0 auto}.image-wrap img{width:100%;height:100%;object-fit:contain;max-width:100%;max-height:100%}.page{print-color-adjust:exact;-webkit-print-color-adjust:exact}table tr{break-inside:avoid}.page:last-child{break-after:auto}
+    table:not(.meta){table-layout:fixed}table:not(.meta) th:first-child,table:not(.meta) td:first-child{width:13mm;white-space:nowrap;overflow-wrap:normal;word-break:normal;text-align:center;vertical-align:middle;font-variant-numeric:tabular-nums}thead{display:table-header-group}th,td{line-height:1.35;word-break:normal}table:not(.meta):not(.task-table):has(th:nth-child(5)) th:nth-child(2){width:18%}table:not(.meta):not(.task-table):has(th:nth-child(5)) th:nth-child(3),table:not(.meta):not(.task-table):has(th:nth-child(5)) th:nth-child(4){width:20%}table:not(.meta):not(.task-table):has(th:nth-child(3)):not(:has(th:nth-child(4))) th:nth-child(2){width:40%}
+  </style></head><body><div class="toolbar"><strong>Weekly Update ${y(b)} \u2014 IT Corporate Application</strong><button onclick="window.print()">Print / Save as PDF</button></div>${k}${w}${m}${d}</body></html>`),i.document.close(),p?.(85,"Memuat gambar lampiran\u2026"),await A(),await Promise.all(Array.from(i.document.images).map(o=>o.decode())),await i.document.fonts.ready,p?.(100,"Laporan terbuka di tab baru. Siap Print / Save as PDF.")}catch(C){throw i.close(),C}}Object.assign(window.pmoExport,{openWeeklyReport:Q});})();
+
+;
 /* Local-only storage; retain the database name to preserve existing imports. */
 window.pmoLocalStore = (() => {
   let opening;
@@ -363,6 +379,67 @@ window.pmoLocalStore = (() => {
     });
   }
   return {read, write, update, archives, deleteArchives};
+})();
+;
+/* Shared GitHub files; privileged credentials never enter this package. */
+window.pmoGithubStore = (() => {
+  const endpoint = location.hostname === 'localhost' && location.port === '8080'
+    ? '/api/public/github-uploads'
+    : 'https://task-trail-weekly.lovable.app/api/public/github-uploads';
+  let session = null;
+  let currentId = '';
+  let currentSha = '';
+  let latestId = '';
+  async function request(method = 'GET', body, id) {
+    if (session && session.expiresAt * 1000 < Date.now() + 60000 && body?.action !== 'refresh') {
+      session = await request('POST', { action: 'refresh', refreshToken: session.refreshToken });
+    }
+    const response = await fetch(endpoint + (id ? '?id=' + encodeURIComponent(id) : ''), {
+      method, headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(session ? { Authorization: 'Bearer ' + session.token } : {}) },
+      body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(90000), credentials: 'omit',
+    });
+    let result;
+    try { result = await response.json(); } catch { throw new Error('Layanan arsip GitHub belum aktif. Website tetap dapat dibaca setelah layanan diterbitkan.'); }
+    if (!response.ok) { if (response.status === 401 || response.status === 403) session = null; throw new Error(result.error || 'Permintaan gagal (' + response.status + ').'); }
+    return result;
+  }
+  async function archives() {
+    const result = await request();
+    latestId = result.archives[0]?.id || '';
+    return result.archives.map(a => ({ ...a, updatedAt: a.uploadedAt }));
+  }
+  async function read(id) {
+    if (!id) { await archives(); id = latestId; }
+    if (!id) return null;
+    const result = await request('GET', undefined, id);
+    currentId = result.id; currentSha = result.sha;
+    return result;
+  }
+  async function fileBase64(file) {
+    if (!file || file.size > 5 * 1024 * 1024) throw new Error('Ukuran file maksimal 5 MB.');
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let text = ''; for (let i = 0; i < bytes.length; i += 8192) text += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    return btoa(text);
+  }
+  async function save(fields, file, kind) {
+    if (!session) throw new Error('Masuk sebagai admin terlebih dahulu.');
+    const result = await request('POST', { kind, filename: file.name, content: await fileBase64(file), data: fields, ...(kind === 'weekly' ? {} : { id: currentId, expectedSha: currentSha }) });
+    currentId = result.id; currentSha = result.sha;
+    await archives();
+    return result;
+  }
+  async function deleteArchives(ids) {
+    if (!session) throw new Error('Hanya admin yang dapat menghapus arsip.');
+    let count = 0;
+    for (const id of ids) {
+      const data = await request('GET', undefined, id);
+      await request('DELETE', { id, expectedSha: data.sha }); count++;
+    }
+    return count;
+  }
+  async function login(email, password) { session = await request('POST', { action: 'login', email, password }); }
+  async function logout() { session = null; }
+  return { read, archives, save, deleteArchives, login, logout, isAdmin: () => Boolean(session), latestId: () => latestId };
 })();
 ;
 /* ---------- Data proyek & wiki (untuk laporan PDF) ---------- */
@@ -599,9 +676,9 @@ function reportChartSvg(chart, compact = false) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escHtml(chart.title)}">${body}</svg>`;
 }
 
-/* ---------- Penyimpanan lokal ---------- */
+/* ---------- Folder unggahan GitHub ---------- */
 async function listArchives() {
-  const rows = await window.pmoLocalStore.archives();
+  const rows = await window.pmoGithubStore.archives();
   const selected = state.archiveId;
   $('archive-select').innerHTML = '<option value="">Data terbaru</option>' + rows.map(a=>`<option value="${escHtml(a.id)}">${escHtml(new Date(a.updatedAt).toLocaleDateString('id-ID') + ' · ' + a.filename)}</option>`).join('');
   $('archive-select').value = selected;
@@ -609,32 +686,35 @@ async function listArchives() {
 async function selectArchive(id) {
   if(!id){state.archiveId='';await load();return;}
   try {
-    if (!id.startsWith('archive:')) throw new Error('Arsip tidak valid.');
-    const data = await window.pmoLocalStore.read(id);
+    const data = await window.pmoGithubStore.read(id);
     if (!data) throw new Error('Arsip tidak ditemukan.');
     state.archiveId=id; applySaved(data);
     state.filters={Project:[],Status:[],Type:[],PIC:[]};state.search='';$('task-search').value='';state.page=1;state.sort=null;
     showError('');renderAll();
-  } catch { $('archive-select').value=state.archiveId;showError('Arsip lokal tidak dapat dimuat.'); }
+  } catch(e) { $('archive-select').value=state.archiveId;showError(e.message || 'Arsip GitHub tidak dapat dimuat.'); }
 }
 let localRevision = 0;
 let localBusy = false;
-async function saveLocal(fields) {
+async function saveLocal(fields, file, kind) {
   localBusy = true;
   localRevision++;
   try {
-    const saved = await window.pmoLocalStore.update(fields);
+    const saved = await window.pmoGithubStore.save({filename:state.filename,tasks:state.tasks,pivot:state.pivot,screenshots:state.screenshots,...fields}, file, kind);
+    state.files = saved.files || {};
     state.owner = new Date(saved.updatedAt).toLocaleString('id-ID', {timeZone:'Asia/Jakarta'});
     renderStorage();
     return saved;
   } finally { localBusy = false; }
 }
-const saveUploadedTasks = (filename, tasks) => saveLocal({filename, tasks});
-const clearUploadedTasks = () => saveLocal({filename:'Data kosong', tasks:[]});
-const savePivot = pivot => saveLocal({pivot});
-const saveScreenshots = screenshots => saveLocal({screenshots});
+const saveUploadedTasks = (filename, tasks, file) => saveLocal({filename, tasks}, file, 'weekly');
+const savePivot = (pivot, file) => saveLocal({pivot}, file, 'pivot');
+const saveScreenshots = (screenshots, file, index) => saveLocal({screenshots}, file, 'screenshot'+(index+1));
 function renderStorage() {
-  $('storage-status').textContent = 'Penyimpanan lokal · Browser perangkat ini';
+  const admin = window.pmoGithubStore.isAdmin();
+  $('storage-status').textContent = 'Folder GitHub · '+(admin?'Admin':'Viewer');
+  $('btn-admin').textContent = admin ? 'Keluar Admin' : 'Masuk Admin';
+  $('manage-archives').hidden = !admin;
+  $('file-list').innerHTML=Object.values(state.files||{}).map(file=>`<a class="btn btn-secondary btn-sm" href="https://github.com/vlopygopy/DashboardPMO/blob/main/${encodeURI(file.path)}" target="_blank" rel="noopener noreferrer">${escHtml(file.name)} ↗</a>`).join('');
 }
 
 /* ---------- Laporan PDF ---------- */
@@ -653,7 +733,7 @@ const formatNumber = n => new Intl.NumberFormat('id-ID').format(n);
 const uniqueSorted = values => [...new Set(values.filter(x => x && x !== '-'))].sort((a, b) => a.localeCompare(b, 'id'));
 
 const state = {
-  archiveId: '', tasks: [], filename: '', pivot: null, screenshots: [null, null], owner: '',
+  archiveId: '', tasks: [], filename: '', pivot: null, screenshots: [null, null], owner: '', files: {},
   search: '', filters: { Project: [], Status: [], Type: [], PIC: [] },
   sort: null, ascending: true, page: 1,
 };
@@ -800,7 +880,6 @@ function renderScreenshots() {
       <div class="shot-actions">
         <input type="file" hidden accept="image/png,image/jpeg,image/webp" aria-label="File screenshot ${index + 1}" data-index="${index}">
         <button class="btn btn-secondary btn-sm" type="button" data-upload="${index}">Unggah Screenshot ${index + 1}</button>
-        ${image ? `<button class="btn btn-ghost btn-icon" type="button" aria-label="Hapus screenshot ${index + 1}" title="Hapus screenshot ${index + 1}" data-remove="${index}">✕</button>` : ''}
       </div>
     </article>`).join('');
   $('shot-grid').querySelectorAll('[data-upload]').forEach(btn => btn.addEventListener('click', () => {
@@ -823,12 +902,12 @@ function renderScreenshots() {
   });
 }
 async function changeScreenshot(index, file) {
-  if(state.archiveId || localBusy)return;
+  if(state.archiveId || localBusy || !window.pmoGithubStore.isAdmin())return;
   try {
     const value = file ? await window.pmoExport.fitReportImage(await readScreenshot(file)) : null;
     const next = [index === 0 ? value : state.screenshots[0], index === 1 ? value : state.screenshots[1]];
-    await saveScreenshots(next);
-    state.screenshots = next; pptReady=null; showError(''); renderScreenshots(); if(file) notify(`Screenshot ${index+1} tersimpan di laptop`); renderStorage();
+    await saveScreenshots(next, file, index);
+    state.screenshots = next; pptReady=null; showError(''); renderAll(); if(file) notify(`Screenshot ${index+1} tersimpan di GitHub`);
   } catch (e) { showError(e instanceof Error ? e.message : 'Screenshot gagal disimpan.'); }
 }
 
@@ -843,14 +922,14 @@ function renderPivot() {
     </article>`).join('')).join('');
 }
 async function handlePivot(file) {
-  if(state.archiveId || localBusy)return;
+  if(state.archiveId || localBusy || !window.pmoGithubStore.isAdmin())return;
   if (!file) return;
   const btn = $('btn-pivot');
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   try {
     const data = await readPivot(file);
-    await savePivot(data);
-    state.pivot = data; showError(''); renderPivot(); renderStorage(); notify('Excel pivot Odoo tersimpan di laptop');
+    await savePivot(data, file);
+    state.pivot = data; showError(''); renderAll(); notify('Excel pivot Odoo tersimpan di GitHub');
   } catch (e) { showError(e instanceof Error ? e.message : 'Pivot gagal dibaca.'); }
   finally { btn.disabled = false; btn.textContent = 'Unggah Pivot Odoo'; }
 }
@@ -897,16 +976,19 @@ function renderAll() {
   renderTable(ordered);
   renderStorage();
   const archived=Boolean(state.archiveId);
+  const readonly=archived || !window.pmoGithubStore.isAdmin();
   $('archive-status').textContent=archived?'Arsip · hanya baca':'Data terbaru';
-  $('btn-clear').disabled=archived;$('btn-pivot').disabled=archived;
-  $('upload-area').setAttribute('aria-disabled',String(archived));
-  $('upload-area').tabIndex=archived?-1:0;
-  $('shot-grid').querySelectorAll('button,input').forEach(el=>el.disabled=archived);
+  $('btn-clear').hidden=true;$('btn-pivot').disabled=readonly || !state.tasks.length;
+  $('upload-area').hidden=!window.pmoGithubStore.isAdmin();
+  $('upload-area').setAttribute('aria-disabled',String(readonly));
+  $('upload-area').tabIndex=readonly?-1:0;
+  $('shot-grid').querySelectorAll('button,input').forEach(el=>el.disabled=readonly || !state.tasks.length);
 
 }
 
 /* ---------- Muat data lokal ---------- */
 function applySaved(saved) {
+  state.files = saved.files || {};
   state.tasks = saved.tasks || [];
   state.pivot = saved.pivot || null;
   state.screenshots = normalizeScreenshots(saved.screenshots);
@@ -917,12 +999,12 @@ async function load() {
   if (importBusy || localBusy || state.archiveId) return;
   const revision = localRevision;
   try {
-    const local = await window.pmoLocalStore.read();
+    const local = await window.pmoGithubStore.read();
     if (revision !== localRevision || importBusy || localBusy) return;
     if (local) applySaved(local);
     renderAll();
     await listArchives();
-  } catch (e) { showError(e?.message || 'Data lokal tidak dapat dimuat.'); }
+  } catch (e) { showError(e?.message || 'Data GitHub tidak dapat dimuat.'); }
 }
 
 /* ---------- Aksi unggah & hapus ---------- */
@@ -933,7 +1015,7 @@ function importStatus(message, busy = false) {
   $('upload-area').setAttribute('aria-busy', String(busy));
 }
 async function handleFile(file) {
-  if (state.archiveId || importBusy || localBusy || !file) return;
+  if (state.archiveId || importBusy || localBusy || !file || !window.pmoGithubStore.isAdmin()) return;
   if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { showError('Gunakan file .xlsx, .xls, atau .csv.'); return; }
   importBusy = true;
   showError('');
@@ -943,14 +1025,15 @@ async function handleFile(file) {
     if (!window.XLSX) throw new Error('Pembaca Excel belum tersedia. Pastikan app.js berada di folder yang sama dengan index.html.');
     const data = await readTasks(file);
     const label = `${file.name} (${data.length} baris)`;
-    importStatus(`${data.length} task terbaca. Menyimpan di laptop…`, true);
-    await saveUploadedTasks(label, data);
+    importStatus(`${data.length} task terbaca. Menyimpan di GitHub…`, true);
+    await saveUploadedTasks(label, data, file);
+    state.pivot=null;state.screenshots=[null,null];
     state.tasks = data; state.filename = label; state.sort = null;
     state.filters = { Project: [], Status: [], Type: [], PIC: [] };
     state.search = ''; $('task-search').value = ''; state.page = 1;
     showError(''); renderAll();
-    importStatus(`${data.length} task berhasil diimport dan tersimpan di laptop.`);
-    notify('Excel mingguan tersimpan di laptop');
+    importStatus(`${data.length} task berhasil diimport dan tersimpan di GitHub.`);
+    notify('Excel mingguan tersimpan di GitHub');
     void listArchives().catch(() => {});
   } catch (e) {
     const message = e instanceof Error ? e.message : e?.message || 'File tidak bisa dibaca.';
@@ -963,15 +1046,7 @@ async function handleFile(file) {
   }
 }
 async function clearData() {
-  if(state.archiveId)return;
-  if (!window.confirm('Kosongkan task di perangkat ini? Data sebelumnya tetap tersedia di Arsip Mingguan.')) return;
-  try {
-    await clearUploadedTasks();
-    state.tasks = []; state.filename = 'Data kosong'; state.page = 1;
-    state.filters = { Project: [], Status: [], Type: [], PIC: [] };
-    state.search = ''; $('task-search').value = '';
-    showError(''); renderAll();
-  } catch { showError('Data tersimpan gagal dihapus. Coba lagi.'); }
+  showError('Data terbaru dilindungi; arsip lama dapat dihapus melalui Kelola Arsip.');
 }
 async function exportPdf() {
  showProgress('PDF');
@@ -1053,28 +1128,42 @@ $('export-dialog').addEventListener('cancel',e=>{if($('export-meter').value!==10
 $('export-close').onclick=()=>$('export-dialog').close();
 $('export-download').onclick=()=>exportPpt();
 $('manage-archives').onclick=async()=>{
+ if(!window.pmoGithubStore.isAdmin())return;
  try {
-  const archives=await window.pmoLocalStore.archives();
-  $('archive-list').innerHTML=archives.length ? archives.map(a=>`<label class="archive-item"><input type="checkbox" value="${escHtml(a.id)}"><span>${escHtml(a.filename)}<small>${escHtml(new Date(a.updatedAt).toLocaleString('id-ID'))}</small></span></label>`).join('') : '<p class="muted">Belum ada arsip lokal.</p>';
+  const archives=(await window.pmoGithubStore.archives()).filter(a=>a.id!==window.pmoGithubStore.latestId());
+  $('archive-list').innerHTML=archives.length ? archives.map(a=>`<label class="archive-item"><input type="checkbox" value="${escHtml(a.id)}"><span>${escHtml(a.filename)}<small>${escHtml(new Date(a.updatedAt).toLocaleString('id-ID'))}</small></span></label>`).join('') : '<p class="muted">Belum ada arsip lama.</p>';
   $('archive-dialog').showModal();
- } catch(e){showError('Daftar arsip lokal tidak dapat dimuat.');}
+ } catch(e){showError(e.message);}
 };
 $('archive-close').onclick=()=>$('archive-dialog').close();
 $('archive-delete').onclick=async()=>{
+ if(!window.pmoGithubStore.isAdmin())return;
  const ids=[...$('archive-list').querySelectorAll('input:checked')].map(x=>x.value);
  if(!ids.length)return;
  if(ids.length>100){notify('Pilih maksimal 100 arsip.');return;}
- if(!confirm(`Hapus ${ids.length} arsip lokal terpilih? Arsip tidak bisa dikembalikan.`))return;
+ if(!confirm(`Hapus ${ids.length} arsip GitHub terpilih? File juga dihapus dari folder aktif; riwayat GitHub masih dapat menyimpan salinan.`))return;
  $('archive-delete').disabled=true;
  try {
-  const count=await window.pmoLocalStore.deleteArchives(ids);
+  const count=await window.pmoGithubStore.deleteArchives(ids);
   if(ids.includes(state.archiveId)){state.archiveId='';await load();}else await listArchives();
-  $('archive-dialog').close();notify(`${count} arsip lokal berhasil dihapus`);
+  $('archive-dialog').close();notify(`${count} arsip GitHub berhasil dihapus`);
  } catch(e){showError('Arsip lokal gagal dihapus. Coba lagi.');}
  finally{$('archive-delete').disabled=false;}
 };
 
 /* ---------- Mulai ---------- */
+$('btn-admin').onclick=async()=>{
+ if(window.pmoGithubStore.isAdmin()){await window.pmoGithubStore.logout();renderAll();return;}
+ $('admin-dialog').showModal();
+};
+$('admin-close').onclick=()=>$('admin-dialog').close();
+$('admin-form').onsubmit=async e=>{
+ e.preventDefault();$('admin-submit').disabled=true;$('admin-error').textContent='';
+ try{await window.pmoGithubStore.login($('admin-email').value,$('admin-password').value);$('admin-password').value='';$('admin-dialog').close();renderAll();notify('Berhasil masuk sebagai admin');}
+ catch(error){$('admin-password').value='';$('admin-error').textContent=error.message;}
+ finally{$('admin-submit').disabled=false;}
+};
 bindEvents();
+renderAll();
 load();
 

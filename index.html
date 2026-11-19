@@ -24,6 +24,7 @@
         <div><h1>Project Monitoring Dashboard</h1><p>Weekly Update · Excel to PDF</p></div>
       </div>
       <div class="top-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-admin" type="button">Masuk Admin</button>
         <span class="data-badge" id="data-badge" title="Belum ada file">Data: Belum ada file</span>
         <button class="btn btn-secondary btn-sm" id="btn-clear" type="button">Kosongkan Data</button>
         <span class="data-badge" id="owner-badge" title=""></span>
@@ -47,9 +48,10 @@
     <div role="alert" class="alert-error" id="error-box" hidden></div>
 
     <section class="panel filter-panel" aria-label="Arsip Mingguan">
-      <div class="section-head"><h2 class="section-title">Arsip Mingguan</h2><button class="btn btn-secondary btn-sm" id="manage-archives">Kelola Arsip</button><span class="data-badge" id="archive-status">Data terbaru</span></div>
+      <div class="section-head"><h2 class="section-title">Folder Unggahan GitHub</h2><button class="btn btn-secondary btn-sm" id="manage-archives" hidden>Kelola Arsip</button><span class="data-badge" id="archive-status">Data terbaru</span></div>
       <label for="archive-select">Pilih data mingguan</label>
       <select id="archive-select" class="search-field"><option value="">Data terbaru</option></select>
+      <div id="file-list" class="table-actions"></div>
     </section>
 
     <section class="kpi-grid" aria-label="Ringkasan task">
@@ -97,25 +99,8 @@
     <section class="charts-grid" aria-label="Analisis task">
       <div class="panel chart-panel"><div class="chart-head"><h3>Distribusi Status Task</h3><span class="chart-tag">Breakdown</span></div><div class="chart-box"><canvas id="chart-status"></canvas></div></div>
       <div class="panel chart-panel"><div class="chart-head"><h3>Workload &amp; Task per PIC</h3><span class="chart-tag">Resource Allocation</span></div><div class="chart-box"><canvas id="chart-pic"></canvas></div></div>
-      <div class="panel chart-panel"><div class="chart-head"><h3>Kategori Pekerjaan (Type)</h3><span class="chart-tag">Document vs System vs People</span></div><div class="chart-box"><canvas id="chart-type"></canvas></div></div>
+      <div class="panel chart-panel"><div class="chart-head"><h3>Kategori Pekerjaan (Type)</h3><span class="chart-tag">Document, System, People</span></div><div class="chart-box"><canvas id="chart-type"></canvas></div></div>
       <div class="panel chart-panel"><div class="chart-head"><h3>Volume Task per Project</h3><span class="chart-tag">Project Breakdown</span></div><div class="chart-box"><canvas id="chart-project"></canvas></div></div>
-    </section>
-
-    <h2 class="section-title">Unggah Screenshot untuk Lampiran Hasil Export</h2>
-    <section aria-label="Screenshot laporan Helpdesk" class="shot-grid" id="shot-grid"></section>
-
-    <section class="report-diagrams" aria-label="Diagram laporan otomatis">
-      <div class="section-head"><h2 class="section-title">Diagram Odoo</h2><span class="data-badge">Excel pivot Odoo</span></div>
-      <div class="generated-diagrams-grid" id="odoo-diagrams"></div>
-    </section>
-
-    <section aria-label="Excel pivot Odoo" class="pivot-row">
-      <div class="pivot-info">
-        <h2 class="section-title">Pivot Odoo · Diagram 3</h2>
-        <p class="muted" id="pivot-info">Belum ada Excel pivot Odoo</p>
-      </div>
-      <input id="pivot-input" type="file" accept=".xlsx,.xls" aria-label="File Excel pivot Odoo" hidden>
-      <button class="btn btn-secondary" id="btn-pivot" type="button">Unggah Pivot Odoo</button>
     </section>
 
     <section id="task-table" class="panel table-panel">
@@ -143,12 +128,32 @@
         </div>
       </div>
     </section>
+
+    <h2 class="section-title">Unggah Screenshot untuk Lampiran Hasil Export</h2>
+    <section aria-label="Screenshot laporan Helpdesk" class="shot-grid" id="shot-grid"></section>
+
+    <section class="report-diagrams" aria-label="Diagram laporan otomatis">
+      <div class="section-head"><h2 class="section-title">Diagram Odoo</h2><span class="data-badge">Excel pivot Odoo</span></div>
+      <div class="generated-diagrams-grid" id="odoo-diagrams"></div>
+    </section>
+
+    <section aria-label="Excel pivot Odoo" class="pivot-row">
+      <div class="pivot-info">
+        <h2 class="section-title">Pivot Odoo · Diagram 3</h2>
+        <p class="muted" id="pivot-info">Belum ada Excel pivot Odoo</p>
+      </div>
+      <input id="pivot-input" type="file" accept=".xlsx,.xls" aria-label="File Excel pivot Odoo" hidden>
+      <button class="btn btn-secondary" id="btn-pivot" type="button">Unggah Pivot Odoo</button>
+    </section>
+
+
   </main>
 
   <footer class="footer">Project Monitoring Dashboard © 2026 | Built for Fast Excel-driven Monitoring &amp; Analytics</footer>
 </div>
 
 <div id="notice" class="notice" role="status" hidden></div>
+<dialog id="admin-dialog" class="archive-dialog"><h2>Masuk Admin</h2><form id="admin-form"><label for="admin-email">Email</label><input id="admin-email" class="search-field" type="email" autocomplete="username" required><label for="admin-password">Kata sandi</label><input id="admin-password" class="search-field" type="password" autocomplete="current-password" required><p id="admin-error" role="alert" class="muted"></p><div class="dialog-actions"><button id="admin-close" type="button" class="btn btn-secondary">Batal</button><button id="admin-submit" type="submit" class="btn btn-primary">Masuk</button></div><a href="https://task-trail-weekly.lovable.app/reset-password" target="_blank" rel="noopener">Buat / Lupa Password</a></form></dialog>
 <dialog id="export-dialog" class="export-dialog"><div class="progress-head"><span id="export-spinner" class="spinner"></span><strong id="export-percent">0%</strong></div><h2 id="export-title">Menyiapkan Export</h2><p id="export-stage" aria-live="polite"></p><progress id="export-meter" value="0" max="100" aria-label="Progres Export"></progress><div class="dialog-actions"><button id="export-close" class="btn btn-secondary" hidden>Selesai</button><button id="export-download" class="btn btn-primary" hidden>Unduh PPT</button></div></dialog>
 <dialog id="archive-dialog" class="archive-dialog"><h2>Kelola Arsip Mingguan</h2><div id="archive-list"></div><div class="dialog-actions"><button id="archive-close" class="btn btn-secondary">Batal</button><button id="archive-delete" class="btn btn-primary">Hapus Terpilih</button></div></dialog>
 <script src="app.js"></script>
